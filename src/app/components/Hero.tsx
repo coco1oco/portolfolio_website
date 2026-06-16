@@ -1,16 +1,14 @@
-import { useEffect, useRef, useState } from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { useEffect, useRef } from 'react';
+import { motion, useScroll, useTransform, useMotionValue, useSpring, useMotionTemplate } from 'framer-motion';
 import { ArrowDown, Download } from 'lucide-react';
 import portrait from '../../imports/Generated_Image_May_31__2026_-_1_22AM.jpg';
-import avatar from '../../imports/1x1.png';
 import { MagneticButton } from './MagneticButton';
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion';
 import { resumeUrl, RESUME_FILENAME } from '../lib/resume';
+import { HeroBackground } from './HeroBackground';
+import { HeroAvatar } from './HeroAvatar';
 
 export function Hero() {
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [revealPos, setRevealPos] = useState({ x: -1000, y: -1000 });
-  const [isHovering, setIsHovering] = useState(false);
   const sectionRef = useRef<HTMLDivElement>(null);
   const { scrollY } = useScroll();
   const reduceMotion = usePrefersReducedMotion();
@@ -19,77 +17,78 @@ export function Hero() {
   const scale = useTransform(scrollY, [0, 300], [1, 0.8]);
   const y = useTransform(scrollY, [0, 300], [0, 100]);
 
+  // Motion values for global parallax (window-based)
+  const windowMouseX = useMotionValue(0);
+  const windowMouseY = useMotionValue(0);
+  const smoothWindowX = useSpring(windowMouseX, { stiffness: 250, damping: 25 });
+  const smoothWindowY = useSpring(windowMouseY, { stiffness: 250, damping: 25 });
+
+  // Motion values for reveal mask (section-based)
+  const revealX = useMotionValue(-1000);
+  const revealY = useMotionValue(-1000);
+  const smoothRevealX = useSpring(revealX, { stiffness: 250, damping: 25 });
+  const smoothRevealY = useSpring(revealY, { stiffness: 250, damping: 25 });
+  
+  // Track hovering state with motion value for smooth opacity transitions
+  const isHovering = useMotionValue(0); // 0 or 1
+  const smoothHovering = useSpring(isHovering, { stiffness: 250, damping: 25 });
+
   useEffect(() => {
     if (reduceMotion) return;
     const handleMouseMove = (e: MouseEvent) => {
-      setMousePosition({
-        x: (e.clientX / window.innerWidth - 0.5) * 15,
-        y: (e.clientY / window.innerHeight - 0.5) * 15,
-      });
+      // Scale from -15 to +15 based on window center for parallax effect
+      windowMouseX.set((e.clientX / window.innerWidth - 0.5) * 30);
+      windowMouseY.set((e.clientY / window.innerHeight - 0.5) * 30);
     };
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, [reduceMotion]);
+  }, [reduceMotion, windowMouseX, windowMouseY]);
 
   const handleSectionMouseMove = (e: React.MouseEvent) => {
     if (reduceMotion) return;
     const rect = sectionRef.current?.getBoundingClientRect();
     if (rect) {
-      setRevealPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+      revealX.set(e.clientX - rect.left);
+      revealY.set(e.clientY - rect.top);
     }
+  };
+
+  const handleMouseEnter = () => !reduceMotion && isHovering.set(1);
+  const handleMouseLeave = () => {
+    isHovering.set(0);
+    // Move mask out of view on leave
+    revealX.set(-1000);
+    revealY.set(-1000);
   };
 
   const REVEAL_RADIUS = 220;
 
+  // Use motion templates to directly generate complex string styles using motion values
+  const maskImage = useMotionTemplate`radial-gradient(circle ${REVEAL_RADIUS}px at ${revealX}px ${revealY}px, black 45%, transparent 75%)`;
+  
   return (
     <section
       ref={sectionRef}
       className="relative min-h-screen flex items-center justify-center px-6 py-20 overflow-hidden bg-white dark:bg-gray-950 transition-colors duration-300"
-      onMouseEnter={() => !reduceMotion && setIsHovering(true)}
-      onMouseLeave={() => {
-        setIsHovering(false);
-        setRevealPos({ x: -1000, y: -1000 });
-      }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       onMouseMove={handleSectionMouseMove}
-      style={{ cursor: isHovering && !reduceMotion ? 'none' : 'auto' }}
     >
-      {/* Permanent avatar — top-left corner */}
-      <motion.div
-        className="absolute top-8 left-8 z-20 group pointer-events-auto"
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, delay: 1.2, ease: 'easeOut' }}
-      >
-        <div className="relative">
-          <img
-            src={avatar}
-            alt="Kurt Michael Mirafelix"
-            className="w-14 h-14 rounded-full object-cover transition-all duration-500 border-2 border-gray-300 group-hover:border-gray-900 shadow-sm"
-          />
-          {/* Tooltip — slides in on group hover */}
-          <div className="absolute left-16 top-1/2 -translate-y-1/2 whitespace-nowrap pointer-events-none opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-out">
-            <div className="bg-gray-900 text-white text-xs font-medium px-3 py-1.5 rounded-full tracking-wide shadow-lg">
-              Kurt Michael Mirafelix
-            </div>
-            {/* Arrow */}
-            <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-gray-900 rotate-45" />
-          </div>
-        </div>
-      </motion.div>
+      <HeroAvatar />
 
       {/* Photo reveal layer — masked to a circle that follows the cursor */}
       <motion.div
-        className="absolute inset-0 pointer-events-none z-0"
-        animate={{ opacity: isHovering ? 1 : 0 }}
-        transition={{ duration: 0.4, ease: 'easeOut' }}
+        className="absolute inset-0 pointer-events-none z-0 hidden sm:block" // Hidden on touch devices
         style={{
-          WebkitMaskImage: `radial-gradient(circle ${REVEAL_RADIUS}px at ${revealPos.x}px ${revealPos.y}px, black 45%, transparent 75%)`,
-          maskImage: `radial-gradient(circle ${REVEAL_RADIUS}px at ${revealPos.x}px ${revealPos.y}px, black 45%, transparent 75%)`,
+          opacity: smoothHovering,
+          WebkitMaskImage: maskImage,
+          maskImage: maskImage,
         }}
       >
         <img
           src={portrait}
-          alt="Kurt Michael Mirafelix featured"
+          alt=""
+          role="presentation"
           className="absolute inset-0 w-full h-full object-cover grayscale"
         />
         {/* Subtle wash to keep things airy */}
@@ -98,45 +97,18 @@ export function Hero() {
 
       {/* Cursor ring */}
       <motion.div
-        className="absolute pointer-events-none z-30 border border-gray-900/30 rounded-full mix-blend-difference"
-        animate={{
-          opacity: isHovering ? 1 : 0,
-          scale: isHovering ? 1 : 0.5,
-        }}
-        transition={{ type: 'spring', stiffness: 250, damping: 25 }}
+        className="absolute pointer-events-none z-30 border border-gray-900/30 rounded-full mix-blend-difference hidden sm:block"
         style={{
           width: REVEAL_RADIUS * 2,
           height: REVEAL_RADIUS * 2,
-          left: revealPos.x - REVEAL_RADIUS,
-          top: revealPos.y - REVEAL_RADIUS,
+          x: useTransform(smoothRevealX, v => v - REVEAL_RADIUS),
+          y: useTransform(smoothRevealY, v => v - REVEAL_RADIUS),
+          opacity: smoothHovering,
+          scale: useTransform(smoothHovering, [0, 1], [0.5, 1]),
         }}
       />
 
-      {/* Geometric background elements */}
-      <motion.div
-        className="absolute top-20 right-20 w-[500px] h-[500px] border border-gray-100 rounded-full z-10"
-        style={{ x: mousePosition.x * 0.5, y: mousePosition.y * 0.5 }}
-        animate={reduceMotion ? undefined : { scale: [1, 1.05, 1], opacity: [0.3, 0.5, 0.3] }}
-        transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-      />
-      <motion.div
-        className="absolute bottom-20 left-20 w-[400px] h-[400px] border border-gray-100 z-10"
-        style={{ x: -mousePosition.x * 0.3, y: -mousePosition.y * 0.3, rotate: 45 }}
-        animate={reduceMotion ? undefined : { scale: [1, 1.08, 1], opacity: [0.2, 0.4, 0.2] }}
-        transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
-      />
-
-      {/* Subtle grid lines */}
-      <div className="absolute inset-0 opacity-[0.015] z-10 pointer-events-none">
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage:
-              'linear-gradient(to right, #000 1px, transparent 1px), linear-gradient(to bottom, #000 1px, transparent 1px)',
-            backgroundSize: '60px 60px',
-          }}
-        />
-      </div>
+      <HeroBackground mouseX={smoothWindowX} mouseY={smoothWindowY} />
 
       {/* Content */}
       <motion.div
@@ -161,29 +133,24 @@ export function Hero() {
           </motion.div>
 
           <div className="space-y-4 relative">
-            <motion.div
-              className="absolute -top-10 left-1/2 -translate-x-1/2 text-xs tracking-[0.3em] uppercase text-gray-400 pointer-events-none whitespace-nowrap"
-              animate={{ opacity: isHovering ? 0 : 1 }}
-              transition={{ duration: 0.3 }}
-            >
-            </motion.div>
-
-            <motion.h1
-              className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-bold leading-none tracking-tight transition-colors duration-300 mix-blend-difference text-gray-900 dark:text-white"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-            >
-              Kurt Michael
-            </motion.h1>
-            <motion.h2
-              className="text-4xl sm:text-5xl md:text-6xl font-light tracking-tight transition-colors duration-300 mix-blend-difference text-gray-900 dark:text-white"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-            >
-              Mirafelix
-            </motion.h2>
+            <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-bold leading-none tracking-tight mix-blend-difference text-gray-900 dark:text-white flex flex-col items-center">
+              <motion.span
+                className="block"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+              >
+                Kurt Michael
+              </motion.span>
+              <motion.span
+                className="block text-4xl sm:text-5xl md:text-6xl font-light"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.4 }}
+              >
+                Mirafelix
+              </motion.span>
+            </h1>
           </div>
         </motion.div>
 
@@ -197,15 +164,15 @@ export function Hero() {
             Fullstack developer with a growing focus on cloud infrastructure and cybersecurity
           </p>
           <motion.div
-            className="flex items-center justify-center gap-3 text-sm text-gray-700 dark:text-gray-300 bg-white/70 dark:bg-gray-900/70 backdrop-blur-sm px-4 py-1 rounded-sm"
+            className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-sm text-gray-700 dark:text-gray-300 bg-white/70 dark:bg-gray-900/70 backdrop-blur-sm px-4 py-1 rounded-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.8 }}
           >
             <span>Cavite, Philippines</span>
-            <span>•</span>
+            <span className="hidden sm:inline">•</span>
             <span>President's Lister</span>
-            <span>•</span>
+            <span className="hidden sm:inline">•</span>
             <span>GPA 1.31</span>
           </motion.div>
         </motion.div>
