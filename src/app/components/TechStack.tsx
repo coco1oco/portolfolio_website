@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import type { IconType } from 'react-icons';
 import {
@@ -21,8 +21,11 @@ import {
   SiJupyter,
   SiGit,
   SiGithub,
+  SiOpenai,
+  SiGooglegemini,
+  SiAnthropic,
 } from 'react-icons/si';
-import { Database, Network, Code2, BarChart3 } from 'lucide-react';
+import { Database, Network, Code2, BarChart3, Brain, Sparkles } from 'lucide-react';
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion';
 
 type Tech = { name: string; Icon: IconType };
@@ -51,6 +54,11 @@ const technologies: Tech[] = [
   { name: 'Git', Icon: SiGit },
   { name: 'GitHub', Icon: SiGithub },
   { name: 'VS Code', Icon: Code2 },
+  { name: 'AI & LLMs', Icon: Brain },
+  { name: 'OpenAI', Icon: SiOpenai },
+  { name: 'Gemini', Icon: SiGooglegemini },
+  { name: 'Claude', Icon: SiAnthropic },
+  { name: 'Prompt Engineering', Icon: Sparkles },
 ];
 
 function Chip({ name, Icon }: Tech) {
@@ -73,12 +81,20 @@ function MarqueeRow({
   reverse?: boolean;
   duration?: number;
 }) {
+  const [isTouched, setIsTouched] = useState(false);
   const animation = `${reverse ? 'tech-marquee-reverse' : 'tech-marquee'} ${duration}s linear infinite`;
+  
   return (
-    <div className="group flex overflow-hidden" role="list">
+    <div 
+      className="group flex overflow-hidden cursor-pointer" 
+      role="list"
+      onTouchStart={() => setIsTouched(true)}
+      onTouchEnd={() => setIsTouched(false)}
+      onTouchCancel={() => setIsTouched(false)}
+    >
       <div
         className="flex shrink-0 gap-4 pr-4 group-hover:[animation-play-state:paused]"
-        style={{ animation }}
+        style={{ animation, animationPlayState: isTouched ? 'paused' : undefined }}
       >
         {items.map((tech) => (
           <Chip key={tech.name} {...tech} />
@@ -87,7 +103,7 @@ function MarqueeRow({
       <div
         aria-hidden
         className="flex shrink-0 gap-4 pr-4 group-hover:[animation-play-state:paused]"
-        style={{ animation }}
+        style={{ animation, animationPlayState: isTouched ? 'paused' : undefined }}
       >
         {items.map((tech) => (
           <Chip key={`${tech.name}-dup`} {...tech} />
