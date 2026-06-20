@@ -16,7 +16,7 @@ export function MetaTags() {
       { property: 'og:type', content: 'website' },
       { property: 'og:title', content: 'Kurt Michael Mirafelix | CS Student & Developer' },
       { property: 'og:description', content: 'Student Developer specializing in React & TypeScript. President\'s Lister at Cavite State University with a 1.14 GWA.' },
-      { property: 'og:url', content: 'https://kurtmirafelix.com' },
+      { property: 'og:url', content: 'https://kurt-mirafelix.kmirafelix.workers.dev/' },
 
       // Twitter
       { name: 'twitter:card', content: 'summary_large_image' },
