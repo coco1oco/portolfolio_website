@@ -11,6 +11,7 @@ export function MetaTags() {
       { name: 'keywords', content: 'Developer, React Developer, TypeScript, Web Developer, Portfolio, Kurt Michael Mirafelix, Kurt Michael Mirafelix Portfolio' },
       { name: 'author', content: 'Kurt Michael Mirafelix' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1.0' },
+      { name: 'google-site-verification', content: 'dPE4N9Svx3zdJfYfGaRbQdqkO7t-vIs53TU1GowbjvY' },
 
       // Open Graph / Facebook
       { property: 'og:type', content: 'website' },
@@ -41,6 +42,34 @@ export function MetaTags() {
 
       meta.setAttribute('content', content);
     });
+
+    // JSON-LD Structured Data — tells Google this site belongs to a real person
+    // This is the most powerful SEO signal for ranking for your own name
+    const jsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'Person',
+      name: 'Kurt Michael Mirafelix',
+      url: 'https://kurt-mirafelix.kmirafelix.workers.dev/',
+      jobTitle: 'Computer Science Student & Developer',
+      alumniOf: {
+        '@type': 'CollegeOrUniversity',
+        name: 'Cavite State University',
+      },
+      knowsAbout: ['React', 'TypeScript', 'Web Development', 'Cloud Computing', 'Cybersecurity'],
+      sameAs: [
+        'https://www.linkedin.com/in/kurt-mirafelix',
+        'https://github.com/kmirafelix',
+      ],
+    };
+
+    // Inject or update the JSON-LD script tag
+    let script = document.querySelector('script[type="application/ld+json"]') as HTMLScriptElement | null;
+    if (!script) {
+      script = document.createElement('script');
+      script.type = 'application/ld+json';
+      document.head.appendChild(script);
+    }
+    script.textContent = JSON.stringify(jsonLd);
   }, []);
 
   return null;

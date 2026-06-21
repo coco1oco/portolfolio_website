@@ -2,4 +2,4 @@
 import resumeUrl from '../../imports/Kurt_Michael_Mirafelix_CV.pdf';
 
 export { resumeUrl };
-export const RESUME_FILENAME = 'Kurt-Mirafelix-Frontend-Engineer.pdf';
+export const RESUME_FILENAME = 'Kurt-Michael-Mirafelix-CV.pdf';
