@@ -8,7 +8,7 @@ export function MetaTags() {
     // Set or update meta tags
     const metaTags = [
       { name: 'description', content: 'Student Developer specializing in React & TypeScript. Building elegant, performant web applications with exceptional user experiences.' },
-      { name: 'keywords', content: 'Frontend Engineer, React Developer, TypeScript, Web Developer, Portfolio, Kurt Mirafelix' },
+      { name: 'keywords', content: 'Developer, React Developer, TypeScript, Web Developer, Portfolio, Kurt Michael Mirafelix, Kurt Michael Mirafelix Portfolio' },
       { name: 'author', content: 'Kurt Michael Mirafelix' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1.0' },
 
