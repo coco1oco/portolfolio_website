@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 export function MetaTags() {
   useEffect(() => {
     // Set document title
-    document.title = 'Kurt Michael Mirafelix | CS Student & Developer';
+    document.title = 'Kurt Michael Mirafelix | Portfolio';
 
     // Set or update meta tags
     const metaTags = [
@@ -14,13 +14,13 @@ export function MetaTags() {
 
       // Open Graph / Facebook
       { property: 'og:type', content: 'website' },
-      { property: 'og:title', content: 'Kurt Michael Mirafelix | CS Student & Developer' },
+      { property: 'og:title', content: 'Kurt Michael Mirafelix | Portfolio' },
       { property: 'og:description', content: 'Student Developer specializing in React & TypeScript. President\'s Lister at Cavite State University with a 1.31 GWA.' },
       { property: 'og:url', content: 'https://kurt-mirafelix.kmirafelix.workers.dev/' },
 
       // Twitter
       { name: 'twitter:card', content: 'summary_large_image' },
-      { name: 'twitter:title', content: 'Kurt Michael Mirafelix | CS Student & Developer' },
+      { name: 'twitter:title', content: 'Kurt Michael Mirafelix | Portfolio' },
       { name: 'twitter:description', content: 'Student Developer specializing in React & TypeScript. Building elegant, performant web applications.' },
     ];
 

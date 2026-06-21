@@ -142,6 +142,12 @@ export function Contact() {
 
     setStatus('sending');
 
+    console.log('EmailJS Debug Params:', {
+      serviceId: EMAILJS_SERVICE_ID,
+      templateId: EMAILJS_TEMPLATE_ID,
+      publicKey: EMAILJS_PUBLIC_KEY
+    });
+
     try {
       // Dynamically import emailjs to keep bundle lean
       const emailjs = await import('@emailjs/browser');
